@@ -1,0 +1,96 @@
+## deduper pseudo code
+
+## the objectve of this program is to parse a sam file and remove PCR duplicates
+    which are reads that were duplicated during the PCR amplicfication process 
+    during library preparation. These reads will have an identical sequence and 
+    therefore equal read metrics which pertain to sequence. 
+
+## Strategy Overview:
+    sorting ther reads by UMI > chromosome > 16 bit binary status will ensure that only a number of reads
+    equal to * N/number_of_UMI/number_of_chromosomes/2 * will be stored in memory at once. 
+    
+## soft clipping: pieces of the mapped reads are trimmed to facilitate the mapping.
+    only occurs at beginning and end of read.
+    hard clipping (clipped sequences not present in seq)
+
+
+## a PCR dublicate will have (hierarchical)
+    • have the same UMI
+    • same chromosome (sort by chrom)
+    • same position 
+    • sam rev_comp status
+
+
+## full pseudo code
+# 0. sort all reads in hierarchical structure, such that; UMI > chromosome > reverse_comp
+
+# 1. main function which interates through file and writes out unique reads 
+
+def main(input_file):
+
+    1. get starting UMI and starting Chromosome number and set reverse complemet to True
+    
+    written_out = 0                                                     # variable that stores number of actual reads
+    umi_main = extracted UMI from first line                            # first UMI in sorted file
+    chrom_main = extracted chromosome number from first line            # first chromosome in sorted file
+    rev_comp_main = True (if reverse complemented)                      # first rev comp boolean in sorted file
+    index_dic = {}                                                      # initialize index dictionary
+
+    for read in reads:                                                  # iterate through all reads
+
+        read_obj = read_class(read)                                     # pass line into read_class and initialize as shown below in read_class
+        if UMI in dictionary_storing_umis:
+            if umi_main != read_obj.umi:                                    # check if iterations have reached next UMI
+                umi_main = read_obj.umi                                     #    reset x, y, z and clear dic
+                chrom_main = read_obj.chrom                                 
+                rev_comp_main = True
+                index_dic = {}                                              
+
+            elif chrom_main != read_obj.chrom:                              # check if iterations have reached next chromosome
+                chrom_main = read_obj.chrom                                 #    reset y, z and clear dic
+                rev_comp_main = True
+                index_dic = {}  
+
+            elif rev_comp_main != read_obj.rev_comp:                        # check if iterations have reached next rev_comp boolean state
+                rev_comp = True
+                index_dic = {}                                              # clear dictionary memory once all reads correspondin to 
+                                                                            #   UMI_x, chrom_y, and rev_comp_z have been iterated through
+        
+            if (read_obj.index not in index_dic):                           # check if cigar string ajusted starting position (index) is 
+                perm_dic[index] = True                                      #   present in dictionary, if not; write out the read and add to dic   
+                out_file.write(read)                                        #    reset z and clear dic
+                written_out += 1                        
+
+        else:
+            continue
+
+
+# RECORD CLASS
+# function which takes the cigar string (string), the position(int), and rev_comp (boolean)
+# and from this information determines the left starting position of the read (if it is not reverse complemented)
+# or the right most starting positon of the read (if it is reverse complamented)
+
+attributes:
+    - index (right most or left most, depending on 16 bit bin status)
+    - rev comp boolean
+    - UMI
+    - chromosome
+
+methods:
+
+    def get_index(cigar_string, position, rev_comp):
+
+        1. check if rev complemented
+        if rev_comp == True:
+            • clipping = parse cigar string plag to obtain the amount of bp extending in right direction  
+            • index = start + clipping
+
+        else: #rev_comp == false
+            • clipping = extract number of bp clipped to reach alignment by parsing cigar string 
+            • index = start - clipping 
+        
+        return index
+
+
+
+
