@@ -28,7 +28,7 @@
 
 def main(input_file):
 
-    1. get starting UMI and starting Chromosome number and set reverse complemet to True
+    # get starting UMI and starting Chromosome number and set reverse complemet to True
     
     written_out = 0                                                     # variable that stores number of actual reads
     umi_main = extracted UMI from first line                            # first UMI in sorted file
