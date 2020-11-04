@@ -4,6 +4,7 @@
 import os
 import argparse
 import sam_record_class
+import glob
 
 # assign classes 
 SamRecord = sam_record_class.SamRecord
@@ -168,15 +169,19 @@ def main():
             file_name = file_name.strip()
             find_duplicates(file_name)
 
-
-
-
     # close meta database file
     meta_database_file.close()
 
 
     ## cat together all output_filtered files O(?)
+    read_files = glob.glob("./Database/*_*_filtered")
+
+    with open("./filtered.sam", "wb") as outfile:
+        for f in read_files:
+            with open(f, "rb") as infile:
+                outfile.write(infile.read())
 
 
 
+# run program 
 main()
