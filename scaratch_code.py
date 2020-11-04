@@ -8,7 +8,6 @@ import sam_record_class
 # assign classes 
 SamRecord = sam_record_class.SamRecord
 
-
 # make dictionary of valid barcodes
 def set_barcodes(index_file):
 
@@ -41,42 +40,55 @@ This will allow the program to operate on each of the groups of
 potential duplicates in parallel.  
 '''
 def make_database(data_base_dir, umi_file, file_in):
-    # make database directory
+
+    # make database directory if not already present
     path = data_base_dir + "/Database"
     try:
         os.mkdir(path)
+
+
+        # dictionary stores open files for writing
+        # form: {index_seq_chr: openfile()}, ex. {AGCT_1: open(AGCT_1,"w")}
+        db_writing_dic = {}
+
+        # dictionary for storing valid barcode sequences 
+        umi_dic = set_barcodes(umi_file)
+
+        # open input file   
+        file_in = open(file_in, "r")    # open input file
+
+        # open file to store database file names
+        meta_data = path + "/meta_data.txt"
+        meta_database = open(meta_data, "w")
+        
+        # iterate through each line and sort it into a file 
+        # based on it's UMI and chromosome
+        for line in file_in:
+            if line[0] != "@": 
+                record = SamRecord(line)
+                if record.dic_key not in db_writing_dic and record.umi in umi_dic:
+                    file_name = "./Database/" + record.dic_key
+                    db_writing_dic[record.dic_key] = open(file_name, "w")
+                    db_writing_dic[record.dic_key].write(record.line)
+
+                    # write out file name to metadata
+                    meta_database.write(file_name + "\n")
+
+                else:
+                    db_writing_dic[record.dic_key].write(record.line)
+        
+        # close all files held in dictionary
+        for db_file in db_writing_dic.keys():
+            db_writing_dic[db_file].close()
+
+        # close input file
+        file_in.close()  
+        meta_database.close()             
+
     except:
-        print("Database is already present")
+        print("Database is already made")
 
-    # dictionary stores open files for writing
-    # form: {index_seq_chr: openfile()}, ex. {AGCT_1: open(AGCT_1,"w")}
-    db_writing_dic = {}
-
-    # dictionary for storing valid barcode sequences
-    umi_dic = set_barcodes(umi_file)
-                      
-    file_in = open(file_in, "r")    # open input file
-    
-    # iterate through each line and sort it into a file 
-    # based on it's UMI and chromosome
-    for line in file_in:
-        if line[0] != "@": 
-            record = SamRecord(line)
-            if record.dic_key not in db_writing_dic and record.umi in umi_dic:
-                file_name = "./Database/" + record.dic_key
-                db_writing_dic[record.dic_key] = open(file_name, "w")
-                db_writing_dic[record.dic_key].write(record.line)
-            else:
-                db_writing_dic[record.dic_key].write(record.line)
-    
-    # close all files held in dictionary
-    for db_file in db_writing_dic.keys():
-        db_writing_dic[db_file].close()
-
-    # close input file
-    file_in.close()               
-
-    return
+    return 
 
 # function which finds duplicates
 '''
@@ -91,7 +103,7 @@ def find_duplicates(dup_file):
     dup_fh = open(dup_file, "r") # open file
     dup_dic = {}                 # init empty dictionary to be {"adjusted position" : True}
     out_file_name = dup_file + "_filtered"
-    out_fh = open(out_file_name)  # file to write out unique reads
+    out_fh = open(out_file_name, "w")  # file to write out unique reads
 
     # iterate thorugh database file (umi(n)_chr(n))
     for line in dup_fh:
@@ -112,9 +124,10 @@ def find_duplicates(dup_file):
 # import arguments from command line
 def get_args():
     parser = argparse.ArgumentParser(description='deduplicate read remover')
-    parser.add_argument("-db", "--database", type=str, help="specifies the directory which the database should be created in")
+    parser.add_argument("-db", "--database", type=str, default="./", help="specifies the directory which the database should be created in")
     parser.add_argument("-i", "--file_in", type=str, help='specifies input file. must be SAM format')
     parser.add_argument("-u", "--UMI", type=str, help='specifies the barcodes (indexes) used in experiment')
+    parser.add_argument("-p", "--parallel", default=False, type=bool, help="boolean (True or False ) which specifies if parallel processing shoule be used. default is False")
 
 
     return parser.parse_args()
@@ -124,6 +137,7 @@ parseArgs = get_args()
 data_base_dir = parseArgs.database
 file_in = parseArgs.file_in
 umi_file = parseArgs.UMI 
+parallel = parseArgs.parallel
 
 # main function
 '''
@@ -132,18 +146,37 @@ main function will
     2. eliminate duplicates from each Databse file
     3. cat together all individual output files
 '''
-#def main():
 
-    #make database ...O(N)?
+def main():
+
+    ## make database ...O(N)?
+    make_database(data_base_dir, umi_file, file_in)
+
+    ## process all files in database (in parallell) O(N / |UMI| / |chr| / 2)?
+
+    # open meta_data file and make output directory
+    meta_database_file = open("./Database/meta_data.txt", "r") 
+
+    # if parallel option is specified as True
+    if parallel == True:
+        print("in development")
+
+    # else process files squencially
+    else:
+
+        for file_name in meta_database_file:
+            file_name = file_name.strip()
+            find_duplicates(file_name)
 
 
 
-    # process all files in database (in parallell) O(N / |UMI| / |chr| / 2)?
 
-    # cat together all output_filtered files O(?)
-
-
-
-make_database(data_base_dir, umi_file, file_in)
+    # close meta database file
+    meta_database_file.close()
 
 
+    ## cat together all output_filtered files O(?)
+
+
+
+main()
