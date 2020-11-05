@@ -4,6 +4,11 @@ import statistics
 import re
 
 # sam file record class
+'''
+This is a class which serves the purpose of storing 
+all the desired information from a sam file alignment
+line. 
+'''
 
 class SamRecord:
 

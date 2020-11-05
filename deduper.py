@@ -126,15 +126,14 @@ def find_duplicates(dup_file):
 
     return 
 
-
 # import arguments from command line
 def get_args():
-    parser = argparse.ArgumentParser(description='deduplicate read remover')
+    parser = argparse.ArgumentParser(description='PCR deduplicate read remover. Requires sam file and UMI file as input')
     parser.add_argument("-db", "--database", type=str, default="./", help="specifies the directory which the database should be created in")
     parser.add_argument("-i", "--file_in", type=str, help='specifies input file. must be SAM format')
     parser.add_argument("-u", "--UMI", type=str, help='specifies the barcodes (indexes) used in experiment')
     parser.add_argument("-p", "--parallel", default=False, type=bool, help="boolean (True or False ) which specifies if parallel processing shoule be used. default is False")
-
+    parser.add_argument("-t", "--threads", type=int, default=8, help="specify the number of cores/threads to run multiprocessing. Only applicable when parallel=True")
 
     return parser.parse_args()
 
@@ -144,29 +143,31 @@ data_base_dir = parseArgs.database
 file_in = parseArgs.file_in
 umi_file = parseArgs.UMI 
 parallel = parseArgs.parallel
+threads = parseArgs.threads
 
 # main function
 '''
 main function will 
     1. first make a database by calling make_databse
-    2. eliminate duplicates from each Databse file
+    2. eliminate duplicates from each Databse file (either sequentially of in parallel)
     3. cat together all individual output files
 '''
 def main():
 
-    ## make database ...O(N)?
+    ## make database ...O(N)
     make_database(data_base_dir, umi_file, file_in)
 
-    ## process all files in database (in parallell) O(N / |UMI| / |chr| / 2)?
+    ## process all files in database (in parallell) O(N / |UMI| / |chr| / 2)
 
     # open meta_data file and make output directory
     meta_database_file = open("./Database/meta_data.txt", "r") 
 
     # if parallel option is specified as True
+    # process database files in parallell
     if parallel == True:
         start = time.time()
         meta_database_list = meta_database_file.readlines()
-        with Pool(8) as p:
+        with Pool(threads) as p:
             p.map(find_duplicates, meta_database_list)
         end = time.time()
         print("Parallel run time: ", end - start)
@@ -183,8 +184,7 @@ def main():
     # close meta database file
     meta_database_file.close()
 
-
-    ## cat together all output_filtered files O(?)
+    ## cat together all output_filtered files O(pretty fast..)
     read_files = glob.glob("./Database/*_*_filtered")
 
     with open("./filtered_big.sam", "wb") as outfile:
@@ -193,9 +193,9 @@ def main():
                 outfile.write(infile.read())
 
     # delete database
-#    database_path = data_base_dir + "/Database" 
     path = os.path.join(data_base_dir, "Database")
     shutil.rmtree(path)
+    print("Process complete. Database Deleted.")
 
 # run program 
 main()
