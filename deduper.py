@@ -5,6 +5,9 @@ import os
 import argparse
 import sam_record_class
 import glob
+import shutil
+from multiprocessing import Pool
+import time
 
 # assign classes 
 SamRecord = sam_record_class.SamRecord
@@ -43,10 +46,9 @@ potential duplicates in parallel.
 def make_database(data_base_dir, umi_file, file_in):
 
     # make database directory if not already present
-    path = data_base_dir + "/Database"
+    path = data_base_dir + "Database"
     try:
         os.mkdir(path)
-
 
         # dictionary stores open files for writing
         # form: {index_seq_chr: openfile()}, ex. {AGCT_1: open(AGCT_1,"w")}
@@ -68,7 +70,7 @@ def make_database(data_base_dir, umi_file, file_in):
             if line[0] != "@": 
                 record = SamRecord(line)
                 if record.dic_key not in db_writing_dic and record.umi in umi_dic:
-                    file_name = "./Database/" + record.dic_key
+                    file_name = data_base_dir + "Database/" + record.dic_key
                     db_writing_dic[record.dic_key] = open(file_name, "w")
                     db_writing_dic[record.dic_key].write(record.line)
 
@@ -99,6 +101,9 @@ a dictionar. If the position is already in the dictionary, continue
 else, write the record out to the file.
 '''
 def find_duplicates(dup_file):
+
+    #strip \n
+    dup_file = dup_file.strip()
 
     # initializations
     dup_fh = open(dup_file, "r") # open file
@@ -147,7 +152,6 @@ main function will
     2. eliminate duplicates from each Databse file
     3. cat together all individual output files
 '''
-
 def main():
 
     ## make database ...O(N)?
@@ -160,14 +164,21 @@ def main():
 
     # if parallel option is specified as True
     if parallel == True:
-        print("in development")
+        start = time.time()
+        meta_database_list = meta_database_file.readlines()
+        with Pool(8) as p:
+            p.map(find_duplicates, meta_database_list)
+        end = time.time()
+        print("Parallel run time: ", end - start)
 
-    # else process files squencially
+    # else process files sequencially
     else:
-
+        start = time.time()
         for file_name in meta_database_file:
-            file_name = file_name.strip()
+            #file_name = file_name.strip()
             find_duplicates(file_name)
+        end = time.time()
+        print("Sequential run time: ", end - start)
 
     # close meta database file
     meta_database_file.close()
@@ -176,12 +187,15 @@ def main():
     ## cat together all output_filtered files O(?)
     read_files = glob.glob("./Database/*_*_filtered")
 
-    with open("./filtered.sam", "wb") as outfile:
+    with open("./filtered_big.sam", "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
 
-
+    # delete database
+#    database_path = data_base_dir + "/Database" 
+    path = os.path.join(data_base_dir, "Database")
+    shutil.rmtree(path)
 
 # run program 
 main()
