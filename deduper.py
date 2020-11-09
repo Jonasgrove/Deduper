@@ -41,55 +41,57 @@ structure:
       rc   n rc   n rc   n  rc   n  *third level not yet implemented
 
 This will allow the program to operate on each of the groups of
-potential duplicates in parallel.  
+potential duplicates in parallel, or process each of them sequentially
+if memory is limited.  
 '''
 def make_database(data_base_dir, umi_file, file_in):
 
     # make database directory if not already present
     path = data_base_dir + "Database"
-    try:
-        os.mkdir(path)
+    
+    #try:
+    os.mkdir(path)
 
-        # dictionary stores open files for writing
-        # form: {index_seq_chr: openfile()}, ex. {AGCT_1: open(AGCT_1,"w")}
-        db_writing_dic = {}
+    # dictionary stores open files for writing
+    # form: {index_seq_chr: openfile()}, ex. {AGCT_1: open(AGCT_1,"w")}
+    db_writing_dic = {}
 
-        # dictionary for storing valid barcode sequences 
-        umi_dic = set_barcodes(umi_file)
+    # dictionary for storing valid barcode sequences 
+    umi_dic = set_barcodes(umi_file)
 
-        # open input file   
-        file_in = open(file_in, "r")    # open input file
+    # open input file   
+    file_in = open(file_in, "r")    # open input file
 
-        # open file to store database file names
-        meta_data = path + "/meta_data.txt"
-        meta_database = open(meta_data, "w")
-        
-        # iterate through each line and sort it into a file 
-        # based on it's UMI and chromosome
-        for line in file_in:
-            if line[0] != "@": 
-                record = SamRecord(line)
-                if record.dic_key not in db_writing_dic and record.umi in umi_dic:
-                    file_name = data_base_dir + "Database/" + record.dic_key
-                    db_writing_dic[record.dic_key] = open(file_name, "w")
-                    db_writing_dic[record.dic_key].write(record.line)
+    # open file to store database file names
+    meta_data = path + "/meta_data.txt"
+    meta_database = open(meta_data, "w")
+    
+    # iterate through each line and sort it into a file 
+    # based on it's UMI and chromosome
+    for line in file_in:
+        if line[0] != "@": 
+            record = SamRecord(line)
+            if record.dic_key not in db_writing_dic and record.umi in umi_dic:
+                file_name = data_base_dir + "Database/" + record.dic_key
+                db_writing_dic[record.dic_key] = open(file_name, "w")
+                db_writing_dic[record.dic_key].write(record.line)
 
-                    # write out file name to metadata
-                    meta_database.write(file_name + "\n")
+                # write out file name to metadata
+                meta_database.write(file_name + "\n")
 
-                else:
-                    db_writing_dic[record.dic_key].write(record.line)
-        
-        # close all files held in dictionary
-        for db_file in db_writing_dic.keys():
-            db_writing_dic[db_file].close()
+            elif record.umi in umi_dic:
+                db_writing_dic[record.dic_key].write(record.line)
+    
+    # close all files held in dictionary
+    for db_file in db_writing_dic.keys():
+        db_writing_dic[db_file].close()
 
-        # close input file
-        file_in.close()  
-        meta_database.close()             
+    # close input file
+    file_in.close()  
+    meta_database.close()             
 
-    except:
-        print("Database is already made")
+    #except:
+    print("Database is already made")
 
     return 
 
@@ -153,7 +155,7 @@ main function will
     3. cat together all individual output files
 '''
 def main():
-
+    start = time.time()
     ## make database ...O(N)
     make_database(data_base_dir, umi_file, file_in)
 
@@ -165,7 +167,7 @@ def main():
     # if parallel option is specified as True
     # process database files in parallell
     if parallel == True:
-        start = time.time()
+        #start = time.time()
         meta_database_list = meta_database_file.readlines()
         with Pool(threads) as p:
             p.map(find_duplicates, meta_database_list)
@@ -174,7 +176,7 @@ def main():
 
     # else process files sequencially
     else:
-        start = time.time()
+        #start = time.time()
         for file_name in meta_database_file:
             #file_name = file_name.strip()
             find_duplicates(file_name)
@@ -187,7 +189,7 @@ def main():
     ## cat together all output_filtered files O(pretty fast..)
     read_files = glob.glob("./Database/*_*_filtered")
 
-    with open("./filtered_big.sam", "wb") as outfile:
+    with open("./filtered_14000.sam", "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
@@ -199,3 +201,15 @@ def main():
 
 # run program 
 main()
+
+# TO DO
+'''
+make option for directing output to specific directory
+get rid of database directory option
+add umi error correcting
+add functionality for paired end sequence data
+add functionality for ramdom indexes
+add functionality to write out duplicates
+add functionality to take duplicate with highest quality (or something)
+add functionality to deal with other cigar string characters (*, D, etc)
+'''

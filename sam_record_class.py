@@ -76,7 +76,6 @@ class SamRecord:
                     align_len += int(number_string)
                     number_string = ""
 
-            print("align len",align_len)
             cigar_adjusted_position = self.left_most + align_len    
 
 
