@@ -8,9 +8,9 @@ import glob
 import shutil
 from multiprocessing import Pool
 import time
-import subprocess 
+import subprocess # didnt actually use
 
-# assign classes 
+# assign class to store sam records 
 SamRecord = sam_record_class.SamRecord
 
 # make dictionary of valid barcodes
@@ -25,27 +25,33 @@ def set_barcodes(index_file):
     
     return index_dic
 
-# make database in parallell
+## make database of um_chromsome sorted files in parallell
+
 '''
 idea is to build database in a parallel process:
-    1. first the file will be broken (randomly) into sub-files
-        use linux to split file
+    1. first the file is broken into sub-files using split
+        see: database_build.sh
         use linux split in bash script and output file of file names (ls)
-    2. each sub-file will be sorted by UMI_chrom_(revcomp_bool)
-        use ls to get list of file names
-       and be given the identifier  UMI_chrom_(revcomp_bool) 
-    3. all files will be catted together after being sorted
+        see: uniq_files.sh
+
+    2. each sub-file is sorted by UMI_chrom
+        see: make_database()
+        
+    3. all files are merged together based on matching UMI_chromosme identifier after being sorted
 '''
 
 def parallel_database(data_base_dir, umi_file, file_in, threads, size):
 
+    '''
+    splt up files 
+    '''
     # determine split size
     split_size = int(size/10)
-
-    # split file into x percent of reads
-    # 1 = data_base_dir | 2 = 50000 | 3 = file_in
+    
+    # split file into files of x percent of reads
+    # arguments
+    # 1 = data_base_dir | 2 = .10 of read number | 3 = file_in
     build_command = "./database_build.sh " + data_base_dir + " " + str(split_size) + " " + file_in
-    #print(build_command)
     os.system(build_command)
 
     # get all sub-file names
@@ -53,11 +59,14 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
     build_args = [(data_base_dir, umi_file, file_name.strip(), True, i) for i, file_name in enumerate(build_files)]
     #print(build_args)
 
+    '''
+    sorf files in parallel process 
+    '''
     # sort x files in parallel to x*split_percentage
     with Pool(threads) as p:
         p.starmap(make_database, build_args)
 
-    ## rejoin the files
+
     '''
     use bash script to get all unique prefixes
     '''
@@ -67,6 +76,10 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
     # make list of all prefix files
     prefix_file = open(data_base_dir + "uniq_output.txt", "r")
     
+
+    '''
+    merge sorted subfiles based on matching UMI_chromosome
+    '''
     # iterate through prefixes and merge files based on prefix
     for prefix in prefix_file:
         prefix = prefix.strip()
@@ -80,7 +93,11 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
             for f in read_files:
                 with open(f, "rb") as infile:
                     outfile.write(infile.read())
-        
+    
+    '''
+    Delete database_build and sorted subfiles. 
+    update metadata.txt file for threading deuplication
+    '''
     # delete sub-files
     rm_command = "rm " + data_base_dir + "Database/*_*_*" 
     os.system(rm_command)
@@ -111,7 +128,7 @@ structure:
         CH_1   CH_n  CH_1    CH_n
         _|_    _|_    _|_     _|_
        |   |  |   |  |   |   |   |
-      rc   n rc   n rc   n  rc   n  *third level not yet implemented
+      rc   n rc   n rc   n  rc   n  *leaf level not yet implemented
 
 This will allow the program to operate on each of the groups of
 potential duplicates in parallel, or process each of them sequentially
@@ -162,7 +179,7 @@ def make_database(data_base_dir, umi_file, file_in, parallel, identifyer):
                 db_writing_dic[record.dic_key].write(record.line)
 
                 # write out file name to metadata
-                meta_database.write(file_name + "\n")
+                meta_database.write(record.dic_key + "\n")
 
             elif record.umi in umi_dic:
                 db_writing_dic[record.dic_key].write(record.line)
@@ -221,6 +238,7 @@ def get_args():
     parser.add_argument("-t", "--threads", type=int, default=8, help="specify the number of cores/threads to run multiprocessing. Only applicable when parallel=True")
     parser.add_argument("-s", "--size", type=int, default=None, help="specify size of the file, so that multiprocessing can break acordingly. only applicable when parallel=True")
     parser.add_argument("-o", "--output", type=str, default="./deduped.sam", help="specify directory and name of output file. default = ./deduped.sam")
+    parser.add_argument("-b", "--break_factor", type=float, default= .10, help="specify the percentage use to break up file size. default is .10 (i.e subfiles are 10 percent the size of original")
 
     return parser.parse_args()
 
@@ -233,13 +251,17 @@ parallel = parseArgs.parallel
 threads = parseArgs.threads
 size = parseArgs.size
 output = parseArgs.output
+break_factor = parseArgs.break_factor
 
 # main function
 '''
 main function will 
-    1. first make a database by calling make_databse
-    2. eliminate duplicates from each Databse file (either sequentially of in parallel)
-    3. cat together all individual output files
+    1. first make a database by calling either:
+        call prallel_databases which will call make_databases in parallell (-p True)
+        or
+        call make_databases on whole file (-p False)
+    2. eliminate duplicates from each Database file (either sequentially of in parallel)
+    3. merge together all output sub-files
 '''
 def main():
     start = time.time()
@@ -247,7 +269,7 @@ def main():
     ## make database ...O(N)
     '''
     if parallel is chosen: the function parallel_datbases is called which,
-        1. breaks input randomly into sub-files based on the size of the file
+        1. breaks input randomly into sub-files based on the size of the file (|sub-file| = |file|*.10 )
         2. call make_database using all sub-files as arguments, in parallel process
         3. join files back together based on UMI_chromosome identifyer
     else: 
@@ -258,7 +280,7 @@ def main():
     else:
         make_database(data_base_dir, umi_file, file_in, parallel, 0)
 
-    ## process all files in database (in parallell) O(N / |UMI| / |chr| / 2)
+    ## process all files in database (in parallell) O(N / |UMI| / |chr|)
 
     # open meta_data file and make output directory
     meta_database_file = open(data_base_dir + "metadata.txt", "r") 
@@ -266,8 +288,7 @@ def main():
     # if parallel option is specified as True
     # process database files in parallell
     if parallel == True:
-        #start = time.time()
-
+    
         # get database files
         meta_database_list = [data_base_dir + "Database/" + file_name.strip() for file_name in meta_database_file]
 
@@ -279,7 +300,7 @@ def main():
 
     # else process files sequencially
     else:
-        #start = time.time()
+
         for file_name in meta_database_file:
             #file_name = file_name.strip()
             find_duplicates(data_base_dir + "Database/" + file_name.strip())
@@ -300,30 +321,27 @@ def main():
     # delete database
     path = os.path.join(data_base_dir, "Database")
     shutil.rmtree(path)
-    print("Process complete. Database Deleted.")
 
     # delete metafiles
-    command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
-    os.system(command)
+    #command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
+    #os.system(command)
+    print("Process complete. Database Deleted.")
 
+
+    return
 # run program 
 main()
 
 # TO DO
 '''
-make option for directing output to specific directory
+(done) make option for directing output to specific directory
 (cancelled) get rid of database directory option
 add umi error correcting
 add functionality for paired end sequence data
 add functionality for ramdom indexes
-add functionality to write out duplicates
+(eh) add functionality to write out duplicates
 add functionality to take duplicate with highest quality (or something)
 add functionality to deal with other cigar string characters (*, D, etc)
 (done) make the databse creation multi threaded. break up the big files, sort 
 them into their umis and chromosomes and then bring the files together.
 '''
-#data_base_dir = "/Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/"
-#umi_file = "/Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt"
-#file_in = "/Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/test_14000.sam"
-
-#parallel_database(data_base_dir, umi_file, file_in, 8, 14000)
