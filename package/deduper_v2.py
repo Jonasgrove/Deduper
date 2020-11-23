@@ -323,8 +323,8 @@ def main():
     shutil.rmtree(path)
 
     # delete metafiles
-    #command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
-    #os.system(command)
+    command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
+    os.system(command)
     print("Process complete. Database Deleted.")
 
 
