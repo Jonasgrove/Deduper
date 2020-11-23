@@ -24,7 +24,6 @@ def set_barcodes(index_file):
     
     return index_dic
 
-
 # make database directory
 '''
 This function will iterate through the file and place reads in database
@@ -212,4 +211,6 @@ add functionality for ramdom indexes
 add functionality to write out duplicates
 add functionality to take duplicate with highest quality (or something)
 add functionality to deal with other cigar string characters (*, D, etc)
+make the databse creation multi threaded. break up the big files, sort 
+them into their umis and chromosomes and then bring the files together.
 '''

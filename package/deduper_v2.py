@@ -214,12 +214,13 @@ def find_duplicates(dup_file):
 # import arguments from command line
 def get_args():
     parser = argparse.ArgumentParser(description='PCR deduplicate read remover. Requires sam file and UMI file as input')
-    parser.add_argument("-db", "--database", type=str, default="./", help="specifies the directory which the database should be created in")
+    parser.add_argument("-db", "--database", type=str, default="./", help="specifies the directory which the database should be created in. default = ./ ")
     parser.add_argument("-i", "--file_in", type=str, help='specifies input file. must be SAM format')
     parser.add_argument("-u", "--UMI", type=str, help='specifies the barcodes (indexes) used in experiment')
     parser.add_argument("-p", "--parallel", default=False, type=bool, help="boolean (True or False ) which specifies if parallel processing shoule be used. default is False")
     parser.add_argument("-t", "--threads", type=int, default=8, help="specify the number of cores/threads to run multiprocessing. Only applicable when parallel=True")
     parser.add_argument("-s", "--size", type=int, default=None, help="specify size of the file, so that multiprocessing can break acordingly. only applicable when parallel=True")
+    parser.add_argument("-o", "--output", type=str, default="./deduped.sam", help="specify directory and name of output file. default = ./deduped.sam")
 
     return parser.parse_args()
 
@@ -231,7 +232,7 @@ umi_file = parseArgs.UMI
 parallel = parseArgs.parallel
 threads = parseArgs.threads
 size = parseArgs.size
-
+output = parseArgs.output
 
 # main function
 '''
@@ -291,7 +292,7 @@ def main():
     ## cat together all output_filtered files O(pretty fast..)
     read_files = glob.glob("./Database/*_*_filtered")
 
-    with open("./filtered_.5mil.sam", "wb") as outfile:
+    with open(output, "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
@@ -301,20 +302,24 @@ def main():
     shutil.rmtree(path)
     print("Process complete. Database Deleted.")
 
+    # delete metafiles
+    command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
+    os.system(command)
+
 # run program 
 main()
 
 # TO DO
 '''
 make option for directing output to specific directory
-get rid of database directory option
+(cancelled) get rid of database directory option
 add umi error correcting
 add functionality for paired end sequence data
 add functionality for ramdom indexes
 add functionality to write out duplicates
 add functionality to take duplicate with highest quality (or something)
 add functionality to deal with other cigar string characters (*, D, etc)
-make the databse creation multi threaded. break up the big files, sort 
+(done) make the databse creation multi threaded. break up the big files, sort 
 them into their umis and chromosomes and then bring the files together.
 '''
 #data_base_dir = "/Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/"
