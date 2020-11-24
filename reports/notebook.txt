@@ -1,0 +1,5 @@
+python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/test_.5.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_half_mill.sam
+
+python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/test_.5.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_half_mill.sam -p True -t 8 -s 500000 
+
+python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/test_with_i.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_testi.sam -p True -t 8 -s 101 

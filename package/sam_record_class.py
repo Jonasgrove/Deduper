@@ -54,25 +54,35 @@ class SamRecord:
             for i in range(3):  
 
                 # if there is soft clipping on left side, trim it
-                if self.cigar == "S":
-                    cigar_trimmed = self.cigar[i:]
+                if self.cigar[i] == "S":
+                    cigar_trimmed = self.cigar[i+1:]
 
                 # else use whole sting
                 else:
                     cigar_trimmed = self.cigar
+            print(cigar_trimmed)
+            # include   M, N, S, I, D
 
             # now iterate through trimmed cigar string
             # turn numbers into ints and add them together
             number_string = ""
             align_len = 0
             for i in range(len(cigar_trimmed)):    
-
+                
                 # if i is a digit          
-                if cigar_trimmed[i] != "M" and cigar_trimmed[i] != "N" and cigar_trimmed[i] != "S":
+                if cigar_trimmed[i] != "M" and cigar_trimmed[i] != "N" and cigar_trimmed[i] != "S" and cigar_trimmed[i] != "I" and cigar_trimmed[i] != "D":
+                    print(number_string)
                     number_string += cigar_trimmed[i]
+               
+                elif cigar_trimmed[i] == "I":
+                    print("elif")
+                    print(number_string)
+                    number_string = ""
+               
 
                 # else i is a character, add number_string to total
                 else:
+                    print(number_string)
                     align_len += int(number_string)
                     number_string = ""
 
@@ -93,7 +103,7 @@ class SamRecord:
 
 # testing 
 '''
-sam_record = "NS500451:154:HWKTMBGXX:1:11101:21621:1145:AGGTTGCT	0	2	93022350	16	40S100M100N100M	*	0	0	TTCCACTGTTGCTTCATAACTGCAGTCCTAACATAAATGTCTGACATGTAGGATGATCTTAAGCAACCCCT	6AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE<EEAAAEE	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU"
+sam_record = "NS500451:154:HWKTMBGXX:1:11101:21621:1145:AGGTTGCT	0	2	93022350	16	40S100M100I100N100M	*	0	0	TTCCACTGTTGCTTCATAACTGCAGTCCTAACATAAATGTCTGACATGTAGGATGATCTTAAGCAACCCCT	6AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE<EEAAAEE	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU"
 
 sam_record_obj = SamRecord(sam_record)
 

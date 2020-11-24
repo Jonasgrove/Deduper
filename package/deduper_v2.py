@@ -25,7 +25,7 @@ def set_barcodes(index_file):
     
     return index_dic
 
-## make database of um_chromsome sorted files in parallell
+## make database of umi_chromsome sorted files in parallel
 
 '''
 idea is to build database in a parallel process:
@@ -54,18 +54,16 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
     build_command = "./database_build.sh " + data_base_dir + " " + str(split_size) + " " + file_in
     os.system(build_command)
 
-    # get all sub-file names
+    # get all sub-file names and make_database arguments
     build_files = open(data_base_dir + "/metadata_build.txt", "r")
     build_args = [(data_base_dir, umi_file, file_name.strip(), True, i) for i, file_name in enumerate(build_files)]
-    #print(build_args)
+
 
     '''
-    sorf files in parallel process 
+    sort files in parallel process 
     '''
-    # sort x files in parallel to x*split_percentage
     with Pool(threads) as p:
         p.starmap(make_database, build_args)
-
 
     '''
     use bash script to get all unique prefixes
