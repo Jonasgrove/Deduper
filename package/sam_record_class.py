@@ -24,7 +24,7 @@ class SamRecord:
         self.dic_key = self.umi + "_" + self.chr
         self.qual = self.get_qual()
         self.rev_comp = (self.bit_flag & 16) == 16
-        self.position_adj = self.get_position()
+        self.position_adj = str(self.get_position()) + "_" + str(self.rev_comp)
         
 
     # pulls UMI off of header
@@ -37,7 +37,7 @@ class SamRecord:
     
     # take average quality of whole read
     def get_qual(self):
-
+        print(self.line_list)
         qual = self.line_list[10]
         qual_list = [ord(asci) - 33 for asci in qual]
 
@@ -60,7 +60,7 @@ class SamRecord:
                 # else use whole sting
                 else:
                     cigar_trimmed = self.cigar
-            print(cigar_trimmed)
+            #print(cigar_trimmed)
             # include   M, N, S, I, D
 
             # now iterate through trimmed cigar string
@@ -71,18 +71,18 @@ class SamRecord:
                 
                 # if i is a digit          
                 if cigar_trimmed[i] != "M" and cigar_trimmed[i] != "N" and cigar_trimmed[i] != "S" and cigar_trimmed[i] != "I" and cigar_trimmed[i] != "D":
-                    print(number_string)
+                    #print(number_string)
                     number_string += cigar_trimmed[i]
                
                 elif cigar_trimmed[i] == "I":
-                    print("elif")
-                    print(number_string)
+                    #print("elif")
+                    #print(number_string)
                     number_string = ""
                
 
                 # else i is a character, add number_string to total
                 else:
-                    print(number_string)
+                    #print(number_string)
                     align_len += int(number_string)
                     number_string = ""
 
@@ -119,8 +119,8 @@ print(sam_record_obj.qual)
 print(sam_record_obj.rev_comp)
 print(93022350 + 300)
 print(sam_record_obj.position_adj)
-
 '''
+
 
 
 

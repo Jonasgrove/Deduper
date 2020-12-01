@@ -62,6 +62,7 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
     '''
     sort files in parallel process 
     '''
+    print("crash here")
     with Pool(threads) as p:
         p.starmap(make_database, build_args)
 
