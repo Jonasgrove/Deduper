@@ -48,7 +48,6 @@ def make_database(data_base_dir, umi_file, file_in):
     # make database directory if not already present
     path = data_base_dir + "Database"
     
-    #try:
     os.mkdir(path)
 
     # dictionary stores open files for writing
@@ -88,9 +87,6 @@ def make_database(data_base_dir, umi_file, file_in):
     # close input file
     file_in.close()  
     meta_database.close()             
-
-    #except:
-    print("Database is already made")
 
     return 
 
@@ -135,6 +131,7 @@ def get_args():
     parser.add_argument("-u", "--UMI", type=str, help='specifies the barcodes (indexes) used in experiment')
     parser.add_argument("-p", "--parallel", default=False, type=bool, help="boolean (True or False ) which specifies if parallel processing shoule be used. default is False")
     parser.add_argument("-t", "--threads", type=int, default=8, help="specify the number of cores/threads to run multiprocessing. Only applicable when parallel=True")
+    parser.add_argument("-o", "--output", type=str, default="./deduped.sam", help="specify directory and name of output file. default = ./deduped.sam")
 
     return parser.parse_args()
 
@@ -145,6 +142,7 @@ file_in = parseArgs.file_in
 umi_file = parseArgs.UMI 
 parallel = parseArgs.parallel
 threads = parseArgs.threads
+output = parseArgs.output
 
 # main function
 '''
@@ -161,7 +159,7 @@ def main():
     ## process all files in database (in parallell) O(N / |UMI| / |chr| / 2)
 
     # open meta_data file and make output directory
-    meta_database_file = open("./Database/meta_data.txt", "r") 
+    meta_database_file = open(data_base_dir + "Database/meta_data.txt", "r") 
 
     # if parallel option is specified as True
     # process database files in parallell
@@ -186,9 +184,9 @@ def main():
     meta_database_file.close()
 
     ## cat together all output_filtered files O(pretty fast..)
-    read_files = glob.glob("./Database/*_*_filtered")
+    read_files = glob.glob(data_base_dir + "Database/*_*_filtered")
 
-    with open("./filtered_14000.sam", "wb") as outfile:
+    with open(output, "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
@@ -196,7 +194,6 @@ def main():
     # delete database
     path = os.path.join(data_base_dir, "Database")
     shutil.rmtree(path)
-    print("Process complete. Database Deleted.")
 
 # run program 
 main()

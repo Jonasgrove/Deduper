@@ -58,11 +58,9 @@ def parallel_database(data_base_dir, umi_file, file_in, threads, size):
     build_files = open(data_base_dir + "/metadata_build.txt", "r")
     build_args = [(data_base_dir, umi_file, file_name.strip(), True, i) for i, file_name in enumerate(build_files)]
 
-
     '''
     sort files in parallel process 
     '''
-    print("crash here")
     with Pool(threads) as p:
         p.starmap(make_database, build_args)
 
@@ -324,10 +322,9 @@ def main():
     # delete metafiles
     command = "rm " + data_base_dir + "metadata.txt " + data_base_dir + "metadata_build.txt " + data_base_dir + "uniq_output.txt"
     os.system(command)
-    print("Process complete. Database Deleted.")
-
 
     return
+
 # run program 
 main()
 
