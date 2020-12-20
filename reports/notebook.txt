@@ -1,5 +1,17 @@
-python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/test_.5.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_half_mill.sam
+paralellization tests
+performed on 1.4 GHz Quad-Core Intel Core i5
 
-python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/test_.5.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_half_mill.sam -p True -t 8 -s 500000 
+version  : file size    : break factor: run time
+version 1: 500,000 reads: NA          : 39.31003189086914
+version 2: 500,000 reads: .3          : 26.275396823883057
+version 2: 500,000 reads: .2          : 24.38790202140808
+version 2: 500,000 reads: .1          : 24.861937046051025
+version 2: 500,000 reads: .05         : 24.607972145080566
+version 2: 500,000 reads: .025        : 24.9491229057312
 
-python ./deduper_v2.py -db /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/package/ -i /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/test_with_i.sam -u /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/in/STL96.txt -o /Users/jonasgrove/bioinformatics/Bi624/deduper/Deduper/out/deduped_testi.sam -p True -t 8 -s 101 
+conclusion:
+version 2 performs better than version 1 by approximately 13 seconds when processing 500,000 reads.
+The break factor (sub_file_size = input_file_size * break_factor) affects the runtime, but not significantly.
+The chosen default breakfactors of .2, .1, and .05 seem to have the best and very close runtimes. 
+It is also likely that the size of the input file could affect what the optimal break factor would be, as well
+as other factors such as number of available cores. 
