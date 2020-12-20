@@ -19,4 +19,3 @@
 ** database_slurm.sh: bash script which splits input file into multiple smaller files using bash **split** command.
 ** uniq_files.sh: bash script which runs **uniq** command to find unique file prefixes. used to merge sorted database files. 
 * includes options for parallel processing or non parallel processing. Parallel processing creates database in parallel process and removes PCR duplicates in parallel process (analogous to version 1).
-* ***NOTE*** version 2 appears to have an issue on talapas (HPC) when files are large and being processed in parallel. 
