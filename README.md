@@ -4,7 +4,7 @@
 
 * algorithm for removing PCR duplicates
 * files: 
-** deduper.py: main program
+*  deduper.py: main program
 ** sam_record_class.py: class to store records as objects
 ** database_build.sh: 
 * includes options for parallel processing (time efficient) or non parallel processing (memory efficient). Parallel processing processes database files in parallel. Database is made in sequential process. 
