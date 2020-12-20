@@ -55,6 +55,7 @@ class SamRecord:
                 # if there is soft clipping on left side, trim it
                 if self.cigar[i] == "S":
                     cigar_trimmed = self.cigar[i+1:]
+                    break
 
                 # else use whole sting
                 else:
@@ -102,7 +103,7 @@ class SamRecord:
 
 # testing 
 '''
-sam_record = "NS500451:154:HWKTMBGXX:1:11101:21621:1145:AGGTTGCT	0	2	93022350	16	40S100M100I100N100M	*	0	0	TTCCACTGTTGCTTCATAACTGCAGTCCTAACATAAATGTCTGACATGTAGGATGATCTTAAGCAACCCCT	6AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE<EEAAAEE	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU"
+sam_record = "_:_:_:_:_:_:70:CTGTTCAC	16	5	1000	36	100M	*	0	0	*	*"
 
 sam_record_obj = SamRecord(sam_record)
 
@@ -116,9 +117,24 @@ print(sam_record_obj.left_most)
 print(sam_record_obj.dic_key)
 print(sam_record_obj.qual)
 print(sam_record_obj.rev_comp)
-print(93022350 + 300)
+print(sam_record_obj.position_adj)
+
+sam_record = "_:_:_:_:_:_:72:CTGTTCAC	16	5	1001	36	4S99M	*	0	0	*	*"
+sam_record_obj = SamRecord(sam_record)
+
+print(sam_record_obj.line)
+print(sam_record_obj.line_list) 
+print(sam_record_obj.umi)
+print(sam_record_obj.chr)
+print(sam_record_obj.bit_flag) 
+print(sam_record_obj.cigar)
+print(sam_record_obj.left_most) 
+print(sam_record_obj.dic_key)
+print(sam_record_obj.qual)
+print(sam_record_obj.rev_comp)
 print(sam_record_obj.position_adj)
 '''
+
 
 
 
